@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String         @id @default(cuid())
+  name             String?
+  email            String?        @unique
+  photoUrl         String?        @map("photo_url")
+  password         String?
+  emailVerified    DateTime?      @map("email_verified")
+  refreshTokens    RefreshToken[]
+  twoFactorEnabled Boolean        @default(false)
+  twoFactorSecret  String?
+  telegramId       String?        @unique
+  telegramUsername String?        @map("telegram_username")
+  languageCode     String?        @map("language_code")
+  meals            Meal[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("refresh_tokens")
+}
+
+enum EmailVerificationType {
+  REGISTRATION
+  EMAIL_CHANGE
+}
+
+model EmailVerificationToken {
+  id        String                @id @default(cuid())
+  email     String
+  token     String                @unique
+  pin       String
+  type      EmailVerificationType
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  pin       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+  @@map("password_reset_tokens")
+}
+
+model Meal {
+  id            String         @id @default(cuid())
+  userId        String
+  type          String
+  description   String
+  nutritionData NutritionData?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("meals")
+}
+
+model NutritionData {
+  id                 String   @id @default(cuid())
+  mealId             String   @unique
+  meal               Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  totalCalories      Float
+  protein            Float
+  fat                Float
+  carbs              Float
+  fiber              Float
+  sugar              Float
+  saturatedFat       Float
+  polyunsaturatedFat Float
+  monounsaturatedFat Float
+  cholesterol        Float
+  vitamins           Json     @default("{}")
+  ingredients        String[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("nutrition_data")
+}

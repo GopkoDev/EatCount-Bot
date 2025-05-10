@@ -1,0 +1,27 @@
+{
+  "name": "eatcount-bot",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch bot.ts"
+  },
+  "keywords": [],
+  "author": "Dmytro Hopko",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "@types/node": "^22.15.17",
+    "dotenv": "^16.5.0",
+    "grammy": "^1.36.1",
+    "openai": "^4.98.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.7.0",
+    "tsx": "^4.19.4"
+  }
+}
