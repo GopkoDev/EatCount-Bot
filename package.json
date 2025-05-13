@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch bot.ts"
+    "dev": "tsx watch bot.ts",
+    "start": "node dist/bot.js",
+    "build": "tsc && npx prisma generate"
   },
   "keywords": [],
   "author": "Dmytro Hopko",
