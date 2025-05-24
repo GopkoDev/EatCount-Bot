@@ -1,3 +1,4 @@
+import { config } from '../../envconfig.js';
 import logger from './logger.js';
 
 interface FatSecretClientConfig {
@@ -30,7 +31,7 @@ class FatSecretClient implements IFatSecretClient {
     try {
       const token = await this.getFatSecretToken();
       this.accesToken = token.access_token;
-      logger.info('[FatSecret API] client initialized successfully');
+      logger.info('[FatSecret API]: client initialized successfully');
     } catch (error) {
       logger.error('[FatSecret API]: Error initializing client:', error);
       throw error;
@@ -114,9 +115,13 @@ export const initFatSecretClient = async (
   await fatSecretClient.initialize();
 };
 
-export const getFatSecretClient = (): IFatSecretClient => {
+export const getFatSecretClient = async (): Promise<IFatSecretClient> => {
   if (!fatSecretClient) {
-    throw new Error('[FatSecret API]: client not initialized');
+    await initFatSecretClient(
+      config.fatSecret.clientId,
+      config.fatSecret.clientSecret
+    );
   }
-  return fatSecretClient;
+
+  return fatSecretClient!;
 };
