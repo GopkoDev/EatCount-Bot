@@ -23,4 +23,11 @@ export const config = {
   openai: {
     apiKey: requireEnv('OPENAI_API_KEY'),
   },
+  fatSecret: {
+    clientId: requireEnv('FAT_SECRET_CLIENT_ID'),
+    clientSecret: requireEnv('FAT_SECRET_CLIENT_SECRET'),
+  },
+  usda: {
+    apiKey: requireEnv('USDA_API_KEY'),
+  },
 };
