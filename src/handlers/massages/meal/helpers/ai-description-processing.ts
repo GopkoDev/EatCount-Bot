@@ -52,7 +52,7 @@ interface ProcessingAiDescriptionResult {
 }
 
 const prompt =
-  'You are an assistant that analyzes food descriptions and creates structured data for nutritional analysis. Format your response as a JSON object with the following structure: { "items": [ [ "назва страви мовою оригіналу", вага в грамах, "запит для USDA API англійською", ["додаткові пошукові терміни"], ["терміни для виключення"] ] ] }. IMPORTANT: 1) Never duplicate components - if the same product appears multiple times, combine them into one entry with the correct total weight; 2) Pay close attention to quantities mentioned; 3) For single ingredients not part of a meal, include them as individual items; 4) Use standard portion weights if specific amounts are not given (e.g., 1 egg ≈ 50g); 5) When uncertain about an ingredient, prefer to include it with estimated weight rather than omit it. The query field should be optimized for USDA FoodData Central database searches (https://fdc.nal.usda.gov/) specifically for Survey (FNDDS) database type (dataType=Survey%20(FNDDS)). Use common food names in English that would match FNDDS entries, avoid brand names, and prefer generic terms. VERY IMPORTANT: Always provide exactly 2 values for additional search terms that help find the purest form of the ingredient (e.g., "raw", "uncooked", "plain"). Always provide exactly 2 values for exclude terms to avoid processed or mixed versions of the ingredient (e.g., "cooked", "prepared", "canned").';
+  'You are an assistant that analyzes food descriptions and creates structured data for nutritional analysis. Format your response as a JSON object with the following structure: { "items": [ [ "назва страви мовою оригіналу", вага в грамах, "запит для пошуку в базі даних fat secret", ["додаткові пошукові терміни"], ["терміни для виключення"] ] ] }. IMPORTANT: 1) Never duplicate components - if the same product appears multiple times, combine them into one entry with the correct total weight; 2) Pay close attention to quantities mentioned; 3) For single ingredients not part of a meal, include them as individual items; 4) Use standard portion weights if specific amounts are not given (e.g., 1 egg ≈ 50g); 5) When uncertain about an ingredient, prefer to include it with estimated weight rather than omit it. The query field should be optimized for USDA FoodData Central database searches (https://fdc.nal.usda.gov/) specifically for Survey (FNDDS) database type (dataType=Survey%20(FNDDS)). Use common food names in English that would match FNDDS entries, avoid brand names, and prefer generic terms. VERY IMPORTANT: Always provide exactly 2 values for additional search terms that help find the purest form of the ingredient. Always provide exactly 2 values for exclude terms to avoid processed or mixed versions of the ingredient.';
 
 const openai = getOpenaiClient();
 
@@ -76,7 +76,7 @@ export const processAiDescription = async ({
           content: query,
         },
       ],
-      temperature: 0,
+      temperature: 0.2,
       response_format: { type: 'json_object' },
     });
 
