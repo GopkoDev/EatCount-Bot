@@ -1,6 +1,6 @@
 import { Bot } from 'grammy';
 import type { MyContext } from './types.js';
-import { PrismaClient } from '@prisma/client';
+
 import logger, { botRequestLogger, botErrorLogger } from './lib/logger.js';
 import { initDb } from './lib/db.js';
 

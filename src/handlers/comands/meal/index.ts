@@ -1,5 +1,5 @@
 import { Bot } from 'grammy';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient, MealType } from '@prisma/client';
 import type { MyContext } from '../../../types.js';
 import { showMealTypesMenu } from '../../../menus/meal-menus.js';
 
@@ -8,34 +8,50 @@ export const mealCommand = (bot: Bot<MyContext>, db: PrismaClient) => {
     await showMealTypesMenu(ctx);
   });
 
-  bot.callbackQuery('meal_breakfast', async (ctx) => {
+  bot.callbackQuery('BREAKFAST', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await askForMealDescription(ctx, 'Сніданок');
+    await askForMealDescription(ctx, 'BREAKFAST');
   });
 
-  bot.callbackQuery('meal_lunch', async (ctx) => {
+  bot.callbackQuery('LUNCH', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await askForMealDescription(ctx, 'Обід');
+    await askForMealDescription(ctx, 'LUNCH');
   });
 
-  bot.callbackQuery('meal_dinner', async (ctx) => {
+  bot.callbackQuery('DINNER', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await askForMealDescription(ctx, 'Вечеря');
+    await askForMealDescription(ctx, 'DINNER');
   });
 
-  bot.callbackQuery('meal_snack', async (ctx) => {
+  bot.callbackQuery('SNACK', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await askForMealDescription(ctx, 'Перекус');
+    await askForMealDescription(ctx, 'SNACK');
   });
 
   // user's meal description was registered in meal-description.ts
 };
 
-async function askForMealDescription(ctx: MyContext, mealType: string) {
+const askForMealDescription = async (ctx: MyContext, mealType: MealType) => {
+  let mealTypeText;
+  switch (mealType) {
+    case 'BREAKFAST':
+      mealTypeText = 'Сніданок';
+      break;
+    case 'LUNCH':
+      mealTypeText = 'Обід';
+      break;
+    case 'DINNER':
+      mealTypeText = 'Вечеря';
+      break;
+    case 'SNACK':
+      mealTypeText = 'Перекус';
+      break;
+  }
+
   ctx.session.waitingFor = 'meal_description';
   ctx.session.mealType = mealType;
 
   await ctx.reply(
-    `Будь ласка, опишіть що ви з'їли на ${mealType.toLowerCase()}:`
+    `Будь ласка, опишіть детально що ви з'їли на ${mealTypeText.toLowerCase()}:`
   );
-}
+};

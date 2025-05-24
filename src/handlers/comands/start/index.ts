@@ -19,7 +19,7 @@ export const startCommand = (bot: Bot<MyContext>, db: PrismaClient) => {
           telegramId: from.id.toString(),
           telegramUsername: from.username,
           languageCode: from.language_code,
-          name: from.first_name + ' ' + from.last_name,
+          name: from.first_name + ' ' + from.last_name || '',
         },
       });
     }
