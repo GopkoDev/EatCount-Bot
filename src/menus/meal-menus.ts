@@ -3,13 +3,13 @@ import type { MyContext } from '../types.js';
 
 export const showMealTypesMenu = async (ctx: MyContext) => {
   const keyboard = new InlineKeyboard()
-    .text('Сніданок', 'meal_breakfast')
+    .text('Сніданок', 'BREAKFAST')
     .row()
-    .text('Обід', 'meal_lunch')
+    .text('Обід', 'LUNCH')
     .row()
-    .text('Вечеря', 'meal_dinner')
+    .text('Вечеря', 'DINNER')
     .row()
-    .text('Перекус', 'meal_snack');
+    .text('Перекус', 'SNACK');
 
   await ctx.reply('Оберіть тип прийому їжі:', { reply_markup: keyboard });
 };
