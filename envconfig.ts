@@ -25,7 +25,7 @@ export const config = {
   },
   fatSecret: {
     clientId: requireEnv('FAT_SECRET_CLIENT_ID'),
-    clientSecret: requireEnv('FAT_SECRET_CLIENT_SECRET'),
+    clientSecret: requireEnv('FAT_SECRET_SECRET'),
   },
   usda: {
     apiKey: requireEnv('USDA_API_KEY'),
