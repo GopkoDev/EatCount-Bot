@@ -25,11 +25,11 @@ export const startTelegramBot = async (token: string) => {
   try {
     bot.start({
       onStart: (botInfo) => {
-        logger.info(`Bot is running as ${botInfo.username}`);
+        logger.info(`[Bot]: is running as ${botInfo.username}`);
       },
       allowed_updates: ['message', 'callback_query'],
     });
   } catch (error) {
-    logger.error('Failed to start bot', { error });
+    logger.error('[Bot]: Failed to start', { error });
   }
 };

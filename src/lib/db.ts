@@ -12,10 +12,10 @@ export const initDb = () => {
 
   db.$connect()
     .then(() => {
-      logger.info('Potgress: successfully connected');
+      logger.info('[Potgress]: successfully connected');
     })
     .catch((error) => {
-      logger.error('Potgress: connection error:', error);
+      logger.error('[Potgress]: connection error:', error);
       process.exit(1);
     });
 
