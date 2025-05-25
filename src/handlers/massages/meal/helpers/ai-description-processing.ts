@@ -41,13 +41,16 @@ interface ProcessingProps {
   query: string;
 }
 
+export interface usageAiApiType {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  model: string;
+  queryText: string;
+}
+
 interface ProcessingAiDescriptionResult {
-  usage: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-    model: string;
-  };
+  usage: usageAiApiType;
   processedFoods: ProcessingResult[];
 }
 
@@ -85,6 +88,7 @@ export const processAiDescription = async ({
       completionTokens: response.usage?.completion_tokens || 0,
       totalTokens: response.usage?.total_tokens || 0,
       model: response.model || currentModel.name,
+      queryText: query,
     };
 
     const content = response.choices[0]?.message?.content;

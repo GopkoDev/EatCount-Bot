@@ -25,29 +25,32 @@ export interface FoodSearchResponse {
 }
 
 export interface Serving {
-  serving_id: string;
+  serving_id: number;
   serving_description: string;
   serving_url: string;
-  metric_serving_amount: string;
+  metric_serving_amount: number;
   metric_serving_unit: string;
-  number_of_units: string;
+  number_of_units: number;
   measurement_description: string;
-  calories: string;
-  carbohydrate: string;
-  protein: string;
-  fat: string;
-  saturated_fat: string;
-  polyunsaturated_fat: string;
-  monounsaturated_fat: string;
-  cholesterol: string;
-  sodium: string;
-  potassium: string;
-  fiber: string;
-  sugar: string;
-  vitamin_a: string;
-  vitamin_c: string;
-  calcium: string;
-  iron: string;
+  calories: number;
+  carbohydrate: number;
+  protein: number;
+  fat: number;
+  saturated_fat: number;
+  polyunsaturated_fat: number;
+  monounsaturated_fat: number;
+  cholesterol: number;
+  sodium: number;
+  potassium: number;
+  fiber: number;
+  sugar: number;
+  vitamin_a: number;
+  vitamin_c: number;
+  calcium: number;
+  iron: number;
+  trans_fat?: number;
+  added_sugars?: number;
+  vitamin_d?: number;
 }
 
 export interface FoodDetails {

@@ -16,6 +16,11 @@ export interface ApiFaildFood {
   error?: string;
 }
 
+export interface ValidFoodsData {
+  foodDetails: FoodDetails;
+  processedFood: ProcessingResult;
+}
+
 const findBestMatch = (
   foodArr: ProcessingResult,
   listFromApi: FoodSearchResponse
@@ -91,8 +96,9 @@ const filterFoodServings = (foodObj: FoodDetailsResponse): FoodDetails => {
 
   const filteredServings = foodObj.food.servings.serving.filter(
     (serving: Serving) =>
-      serving.number_of_units === '100.000' &&
-      serving.measurement_description === 'g'
+      (serving.number_of_units === 100.0 &&
+        serving.measurement_description === 'g') ||
+      serving.serving_description === '100 g'
   );
 
   if (filteredServings.length === 0) {
@@ -115,7 +121,7 @@ const filterFoodServings = (foodObj: FoodDetailsResponse): FoodDetails => {
 export const nutritionFatsecret = async (
   processedFoods: ProcessingResult[]
 ): Promise<{
-  validFoods: FoodDetails[];
+  validFoods: ValidFoodsData[];
   failedFoods: ApiFaildFood[];
 }> => {
   try {
@@ -148,7 +154,11 @@ export const nutritionFatsecret = async (
           try {
             const foodDetails = await getFoodById(result.id!);
             const filteredServings = filterFoodServings(foodDetails);
-            return { valid: true, foodDetails: filteredServings };
+            return {
+              valid: true,
+              foodDetails: filteredServings,
+              processedFood: result.food,
+            };
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
@@ -165,9 +175,15 @@ export const nutritionFatsecret = async (
         })
     );
 
-    const validFoods: FoodDetails[] = foodDetailsResults
+    const validFoods: {
+      foodDetails: FoodDetails;
+      processedFood: ProcessingResult;
+    }[] = foodDetailsResults
       .filter((result) => result.valid)
-      .flatMap((result) => result.foodDetails!);
+      .map((result) => ({
+        foodDetails: result.foodDetails!,
+        processedFood: result.processedFood!,
+      }));
 
     const additionalFailedFoods: ApiFaildFood[] = foodDetailsResults
       .filter((result) => !result.valid)
