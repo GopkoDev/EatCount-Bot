@@ -2,11 +2,12 @@ import { Bot } from 'grammy';
 import type { MyContext } from '../../../types.js';
 import type { MealType, PrismaClient } from '@prisma/client';
 
+import logger from '../../../lib/logger.js';
+import { mocFoods, mocUsage } from './data/moc.js';
+
 import { getUserFromDb } from '../../../helpers/get-user-from-db.js';
 import { processAiDescription } from './helpers/ai-description-processing.js';
 import { nutritionFatsecret } from './helpers/nutrition-fatsecret-data.js';
-import { mocFoods, mocUsage } from './moc.js';
-import logger from '../../../lib/logger.js';
 import { fatSecretDbProcessor } from './helpers/fatsecret-db-processor.js';
 import { formatAnswer } from './helpers/format-answer.js';
 import { writeToDb } from './helpers/write-meal-to-db.js';
