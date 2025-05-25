@@ -1,6 +1,7 @@
 import { Bot } from 'grammy';
 import type { PrismaClient } from '@prisma/client';
 import type { MyContext } from '../../../types.js';
+import { showMainMenu } from '../../../menus/main-menu.js';
 
 export const startCommand = (bot: Bot<MyContext>, db: PrismaClient) => {
   bot.command('start', async (ctx) => {
@@ -25,7 +26,9 @@ export const startCommand = (bot: Bot<MyContext>, db: PrismaClient) => {
     }
 
     await ctx.reply(
-      `Вітаю ${from.first_name}! Що ж, почнемо! Щоб додати новий прийом їжі, натисніть на кнопку нижче або відправте команду /meal`
+      `Вітаю ${from.first_name}! Що ж, почнемо працювати з EatCount Bot!`
     );
+
+    await showMainMenu(ctx);
   });
 };

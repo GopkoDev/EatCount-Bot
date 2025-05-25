@@ -7,6 +7,7 @@ import { initDb } from './lib/db.js';
 import { registerMiddlewares } from './middlewares/index.js';
 import { registerCommands } from './handlers/comands/index.js';
 import { registerMassages } from './handlers/massages/index.js';
+import { registerKeyboardsCallbacks } from './menus/index.js';
 
 export const startTelegramBot = async (token: string) => {
   const bot = new Bot<MyContext>(token);
@@ -17,6 +18,7 @@ export const startTelegramBot = async (token: string) => {
   registerMiddlewares(bot);
   registerCommands(bot, db);
   registerMassages(bot, db);
+  registerKeyboardsCallbacks(bot);
 
   bot.catch((err) => {
     botErrorLogger(err);

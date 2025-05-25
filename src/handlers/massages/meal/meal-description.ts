@@ -4,6 +4,7 @@ import type { MealType, PrismaClient } from '@prisma/client';
 
 import logger from '../../../lib/logger.js';
 import { mocFoods, mocUsage } from './data/moc.js';
+import { showMainMenu } from '../../../menus/main-menu.js';
 
 import { getUserFromDb } from '../../../helpers/get-user-from-db.js';
 import { processAiDescription } from './helpers/ai-description-processing.js';
@@ -64,6 +65,7 @@ export const mealDescription = (bot: Bot<MyContext>, db: PrismaClient) => {
           `Виникла помилка при обробці вашого прийому їжі. Будь ласка, спробуйте ще раз пізніше.`
         );
       }
+      await showMainMenu(ctx);
     }
   });
 };
