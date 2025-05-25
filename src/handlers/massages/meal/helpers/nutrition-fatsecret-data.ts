@@ -50,14 +50,12 @@ const findBestMatch = (
   return sortedFoods[0];
 };
 
-const searchFoodItem = async (
-  foodArr: ProcessingResult
-): Promise<string | null> => {
+const searchFoodItem = async (foodArr: ProcessingResult): Promise<string> => {
   const response = await fatSecret.searchFood(foodArr.query);
 
-  if (response.foods.total_results === 0) {
+  if (Number(response.foods.total_results) === 0 || !response.foods.food) {
     logger.warn(`No results found for "${foodArr.query}"`);
-    return null;
+    throw new Error(`No results found for "${foodArr.query}"`);
   }
 
   const bestMatch = findBestMatch(foodArr, response);
@@ -65,43 +63,53 @@ const searchFoodItem = async (
 };
 
 const getFoodById = async (foodId: string): Promise<FoodDetailsResponse> => {
-  return await fatSecret.getFoodById(foodId);
-};
+  const result = await fatSecret.getFoodById(foodId);
 
-const filterFoodServings = (foodArr: FoodDetailsResponse[]): FoodDetails[] => {
-  if (!Array.isArray(foodArr)) {
-    logger.warn('Expected an array of food items, received:', foodArr);
-    return [];
+  if (!result.food || !result.food) {
+    throw new Error(`Food item with ID "${foodId}" does not exist`);
   }
 
-  return foodArr
-    .map((foodObj: FoodDetailsResponse) => {
-      if (
-        !foodObj.food ||
-        !foodObj.food.servings ||
-        !foodObj.food.servings.serving
-      ) {
-        logger.warn(
-          'Food item does not have servings:',
-          foodObj.food?.food_name || 'Unknown food'
-        );
-        return null;
-      }
+  return result;
+};
 
-      const filteredServings = foodObj.food.servings.serving.filter(
-        (serving: Serving) =>
-          serving.number_of_units === '100.000' &&
-          serving.measurement_description === 'g'
-      );
+const filterFoodServings = (foodObj: FoodDetailsResponse): FoodDetails => {
+  if (
+    !foodObj.food ||
+    !foodObj.food.servings ||
+    !foodObj.food.servings.serving
+  ) {
+    logger.warn(
+      'Food item does not have servings:',
+      foodObj.food?.food_name || 'Unknown food'
+    );
+    throw new Error(
+      `filterFoodServings: Food item does not have servings: ${
+        foodObj.food?.food_name || 'Unknown food'
+      }`
+    );
+  }
 
-      return {
-        ...foodObj.food,
-        servings: {
-          serving: filteredServings,
-        },
-      };
-    })
-    .filter((item: any): item is FoodDetails => item !== null);
+  const filteredServings = foodObj.food.servings.serving.filter(
+    (serving: Serving) =>
+      serving.number_of_units === '100.000' &&
+      serving.measurement_description === 'g'
+  );
+
+  if (filteredServings.length === 0) {
+    logger.warn(
+      `No servings found for food "${foodObj.food.food_name}" with 100g measurement`
+    );
+    throw new Error(
+      `filterFoodServings: No servings found for food "${foodObj.food.food_name}" with 100g measurement`
+    );
+  }
+
+  return {
+    ...foodObj.food,
+    servings: {
+      serving: filteredServings,
+    },
+  };
 };
 
 export const nutritionFatsecret = async (
@@ -111,61 +119,73 @@ export const nutritionFatsecret = async (
   failedFoods: ApiFaildFood[];
 }> => {
   try {
-    const failedFoods: { food: ProcessingResult; error?: string }[] = [];
-
-    const idsList = await Promise.all(
+    const idsResults = await Promise.all(
       processedFoods.map(async (food) => {
         try {
           const id = await searchFoodItem(food);
-          if (!id) {
-            failedFoods.push({ food });
-          }
-          return id;
+          return { valid: true, food, id };
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : 'Unknown error';
           logger.error(`Error searching food item "${food.query}":`, error);
-          failedFoods.push({ food, error: errorMessage });
-          return null;
+          return {
+            valid: false,
+            food,
+            error: `Error searching food item "${food.query}": ${errorMessage}`,
+          };
         }
       })
     );
 
-    const foodDetails = await Promise.all(
-      idsList.map(async (id, index) => {
-        if (id) {
+    const failedFoods: ApiFaildFood[] = idsResults
+      .filter((result) => !result.valid)
+      .map((result) => ({ food: result.food, error: result.error! }));
+
+    const foodDetailsResults = await Promise.all(
+      idsResults
+        .filter((result) => result.valid)
+        .map(async (result) => {
           try {
-            return await getFoodById(id);
+            const foodDetails = await getFoodById(result.id!);
+            const filteredServings = filterFoodServings(foodDetails);
+            return { valid: true, foodDetails: filteredServings };
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
-            logger.error(`Error fetching food details for ID "${id}":`, error);
-            failedFoods.push({
-              food: processedFoods[index],
-              error: errorMessage,
-            });
-            return null;
+            logger.error(
+              `Error fetching food details for ID "${result.id}":`,
+              error
+            );
+            return {
+              valid: false,
+              food: result.food,
+              error: `Error fetching food details for ID "${result.id}": ${errorMessage}`,
+            };
           }
-        }
-        return null;
-      })
+        })
     );
 
-    const validFoodDetails = foodDetails.filter(
-      (item): item is FoodDetailsResponse => item !== null
-    );
-    const validFoods = filterFoodServings(validFoodDetails);
+    const validFoods: FoodDetails[] = foodDetailsResults
+      .filter((result) => result.valid)
+      .flatMap((result) => result.foodDetails!);
 
-    return { validFoods, failedFoods };
+    const additionalFailedFoods: ApiFaildFood[] = foodDetailsResults
+      .filter((result) => !result.valid)
+      .map((result) => ({ food: result.food!, error: result.error! }));
+
+    return {
+      validFoods,
+      failedFoods: [...failedFoods, ...additionalFailedFoods],
+    };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Error in nutritionFatsecret:', error);
+    logger.error('Critical error in nutritionFatsecret:', error);
     return {
       validFoods: [],
       failedFoods: processedFoods.map((food) => ({
         food,
-        error: errorMessage,
+        error: `Critical error in nutritionFatsecret: ${errorMessage}`,
       })),
     };
   }
