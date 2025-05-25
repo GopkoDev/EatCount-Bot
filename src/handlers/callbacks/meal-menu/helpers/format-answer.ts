@@ -58,15 +58,15 @@ ${failed
         break;
       case 'LUNCH':
         mealTypeText = 'обід';
-        mealEmoji = '🍲';
+        mealEmoji = '🍝';
         break;
       case 'DINNER':
         mealTypeText = 'вечеря';
-        mealEmoji = '🍝';
+        mealEmoji = '🍽️ ';
         break;
       case 'SNACK':
         mealTypeText = 'перекус';
-        mealEmoji = '🥐';
+        mealEmoji = '🍌';
         break;
     }
   }
