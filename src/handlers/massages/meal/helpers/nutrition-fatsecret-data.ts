@@ -11,6 +11,11 @@ import logger from '../../../../lib/logger.js';
 
 const fatSecret = await getFatSecretClient();
 
+export interface ApiFaildFood {
+  food: ProcessingResult;
+  error?: string;
+}
+
 const findBestMatch = (
   foodArr: ProcessingResult,
   listFromApi: FoodSearchResponse
@@ -101,21 +106,26 @@ const filterFoodServings = (foodArr: FoodDetailsResponse[]): FoodDetails[] => {
 
 export const nutritionFatsecret = async (
   processedFoods: ProcessingResult[]
-): Promise<{ validFoods: FoodDetails[]; failedFoods: ProcessingResult[] }> => {
+): Promise<{
+  validFoods: FoodDetails[];
+  failedFoods: ApiFaildFood[];
+}> => {
   try {
-    const failedFoods: ProcessingResult[] = [];
+    const failedFoods: { food: ProcessingResult; error?: string }[] = [];
 
     const idsList = await Promise.all(
       processedFoods.map(async (food) => {
         try {
           const id = await searchFoodItem(food);
           if (!id) {
-            failedFoods.push(food);
+            failedFoods.push({ food });
           }
           return id;
         } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : 'Unknown error';
           logger.error(`Error searching food item "${food.query}":`, error);
-          failedFoods.push(food);
+          failedFoods.push({ food, error: errorMessage });
           return null;
         }
       })
@@ -127,8 +137,13 @@ export const nutritionFatsecret = async (
           try {
             return await getFoodById(id);
           } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
             logger.error(`Error fetching food details for ID "${id}":`, error);
-            failedFoods.push(processedFoods[index]);
+            failedFoods.push({
+              food: processedFoods[index],
+              error: errorMessage,
+            });
             return null;
           }
         }
@@ -143,7 +158,15 @@ export const nutritionFatsecret = async (
 
     return { validFoods, failedFoods };
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     logger.error('Error in nutritionFatsecret:', error);
-    return { validFoods: [], failedFoods: processedFoods };
+    return {
+      validFoods: [],
+      failedFoods: processedFoods.map((food) => ({
+        food,
+        error: errorMessage,
+      })),
+    };
   }
 };
