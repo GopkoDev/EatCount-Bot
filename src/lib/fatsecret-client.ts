@@ -6,9 +6,68 @@ interface FatSecretClientConfig {
   clientSecret: string;
 }
 
+export interface FoodSearchResult {
+  food_id: string;
+  food_name: string;
+  food_type: string;
+  food_url: string;
+  brand_name?: string;
+  food_description?: string;
+}
+
+export interface FoodSearchResponse {
+  foods: {
+    food: FoodSearchResult[];
+    max_results: number;
+    total_results: number;
+    page_number: number;
+  };
+}
+
+export interface Serving {
+  serving_id: string;
+  serving_description: string;
+  serving_url: string;
+  metric_serving_amount: string;
+  metric_serving_unit: string;
+  number_of_units: string;
+  measurement_description: string;
+  calories: string;
+  carbohydrate: string;
+  protein: string;
+  fat: string;
+  saturated_fat: string;
+  polyunsaturated_fat: string;
+  monounsaturated_fat: string;
+  cholesterol: string;
+  sodium: string;
+  potassium: string;
+  fiber: string;
+  sugar: string;
+  vitamin_a: string;
+  vitamin_c: string;
+  calcium: string;
+  iron: string;
+}
+
+export interface FoodDetails {
+  food_id: string;
+  food_name: string;
+  food_type: string;
+  food_description: string;
+  servings: {
+    serving: Serving[];
+  };
+}
+
+export interface FoodDetailsResponse {
+  food: FoodDetails;
+}
+
 interface IFatSecretClient {
   initialize(): Promise<void>;
-  searchFoods(query: string): Promise<any>;
+  searchFood(query: string): Promise<FoodSearchResponse>;
+  getFoodById(foodId: string): Promise<FoodDetailsResponse>;
 }
 
 class FatSecretClient implements IFatSecretClient {
@@ -77,7 +136,7 @@ class FatSecretClient implements IFatSecretClient {
     }
   }
 
-  public searchFoods = async (query: string) => {
+  public searchFood = async (query: string): Promise<FoodSearchResponse> => {
     if (!this.accesToken) {
       throw new Error(
         '[FatSecret API]: client not initialized. Call initialize() first.'
@@ -96,8 +155,45 @@ class FatSecretClient implements IFatSecretClient {
     );
 
     if (!response.ok) {
+      if (response.status === 401) {
+        this.accesToken = null;
+        await this.initialize();
+        return this.searchFood(query);
+      }
+
       throw new Error(
         `Failed to search foods: ${response.status} ${response.statusText}`
+      );
+    }
+
+    return await response.json();
+  };
+
+  public getFoodById = async (foodId: string): Promise<FoodDetailsResponse> => {
+    if (!this.accesToken) {
+      throw new Error(
+        '[FatSecret API]: client not initialized. Call initialize() first.'
+      );
+    }
+
+    const response = await fetch(
+      `https://platform.fatsecret.com/rest/server.api?method=food.get.v4&food_id=${foodId}&format=json`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.accesToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        this.accesToken = null;
+        await this.initialize();
+        return this.getFoodById(foodId);
+      }
+
+      throw new Error(
+        `Failed to get food by ID: ${response.status} ${response.statusText}`
       );
     }
 

@@ -29,7 +29,7 @@ type ApiResponse = {
   items: FoodItem[];
 };
 
-type ProcessingResult = {
+export type ProcessingResult = {
   name: string;
   weight: number;
   query: string;
@@ -48,7 +48,7 @@ interface ProcessingAiDescriptionResult {
     totalTokens: number;
     model: string;
   };
-  foodItems: ProcessingResult[];
+  processedFoods: ProcessingResult[];
 }
 
 const prompt =
@@ -98,7 +98,7 @@ export const processAiDescription = async ({
       parseResponse(item)
     ) as ProcessingResult[];
 
-    return { usage, foodItems: result };
+    return { usage, processedFoods: result };
   } catch (error) {
     const text = `[AI Description Processing]: Failed to process query "${query}": ${error}`;
     logger.error(text);
