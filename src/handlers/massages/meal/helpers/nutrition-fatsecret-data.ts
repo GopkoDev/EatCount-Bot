@@ -101,26 +101,34 @@ const filterFoodServings = (foodArr: FoodDetailsResponse[]): FoodDetails[] => {
 
 export const nutritionFatsecret = async (
   processedFoods: ProcessingResult[]
-): Promise<FoodDetails[]> => {
+): Promise<{ validFoods: FoodDetails[]; failedFoods: ProcessingResult[] }> => {
   try {
+    const failedFoods: ProcessingResult[] = [];
+
     const idsList = await Promise.all(
       processedFoods.map(async (food) => {
         try {
-          return await searchFoodItem(food);
+          const id = await searchFoodItem(food);
+          if (!id) {
+            failedFoods.push(food);
+          }
+          return id;
         } catch (error) {
           logger.error(`Error searching food item "${food.query}":`, error);
+          failedFoods.push(food);
           return null;
         }
       })
     );
 
     const foodDetails = await Promise.all(
-      idsList.map(async (id) => {
+      idsList.map(async (id, index) => {
         if (id) {
           try {
             return await getFoodById(id);
           } catch (error) {
             logger.error(`Error fetching food details for ID "${id}":`, error);
+            failedFoods.push(processedFoods[index]);
             return null;
           }
         }
@@ -131,11 +139,11 @@ export const nutritionFatsecret = async (
     const validFoodDetails = foodDetails.filter(
       (item): item is FoodDetailsResponse => item !== null
     );
-    const result = filterFoodServings(validFoodDetails);
+    const validFoods = filterFoodServings(validFoodDetails);
 
-    return result;
+    return { validFoods, failedFoods };
   } catch (error) {
     logger.error('Error in nutritionFatsecret:', error);
-    return [];
+    return { validFoods: [], failedFoods: processedFoods };
   }
 };
