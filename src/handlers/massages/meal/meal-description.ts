@@ -3,19 +3,8 @@ import type { MyContext } from '../../../types.js';
 import type { MealType, PrismaClient } from '@prisma/client';
 
 import logger from '../../../lib/logger.js';
-import { mocFoods, mocUsage } from './data/moc.js';
 import { showMainMenu } from '../../../menus/main-menu.js';
-
-import { getUserFromDb } from '../../../helpers/get-user-from-db.js';
-import { processAiDescription } from './helpers/ai-description-processing.js';
-import { nutritionFatsecret } from './helpers/nutrition-fatsecret-data.js';
-import { fatSecretDbProcessor } from './helpers/fatsecret-db-processor.js';
-import { formatAnswer } from './helpers/format-answer.js';
-import { writeToDb } from './helpers/write-meal-to-db.js';
-import { config } from '../../../../envconfig.js';
-
-const manualDisableMoc = false;
-const isMoc = config.server.nodeEnv === 'development' && !manualDisableMoc;
+import { mealDescriptionProcessor } from '../../callbacks/meal-menu/services/meal-description-processor.js';
 
 export const mealDescription = (bot: Bot<MyContext>, db: PrismaClient) => {
   bot.on('message:text', async (ctx) => {
@@ -30,30 +19,14 @@ export const mealDescription = (bot: Bot<MyContext>, db: PrismaClient) => {
       await ctx.reply('Аналізую ваш прийом їжі, будь ласка, зачекайте...');
 
       try {
-        const user = await getUserFromDb(userId, db);
-
-        const { processedFoods, usage } = isMoc
-          ? { processedFoods: mocFoods, usage: mocUsage }
-          : await processAiDescription({
-              query: mealDescription,
-            });
-
-        const { validFoods, failedFoods } = await nutritionFatsecret(
-          processedFoods
-        );
-
-        const preparedForDb = fatSecretDbProcessor(validFoods, mealType);
-
-        const nutritionMessage = formatAnswer(preparedForDb, failedFoods);
-        await ctx.reply(nutritionMessage, { parse_mode: 'Markdown' });
-
-        await writeToDb({
+        const nutritionMessage = await mealDescriptionProcessor({
           db,
-          meal: preparedForDb,
-          user,
-          failedFoods,
-          aiApiUsage: usage,
+          mealDescription,
+          mealType,
+          userId,
         });
+
+        await ctx.reply(nutritionMessage, { parse_mode: 'Markdown' });
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
@@ -65,6 +38,7 @@ export const mealDescription = (bot: Bot<MyContext>, db: PrismaClient) => {
           `Виникла помилка при обробці вашого прийому їжі. Будь ласка, спробуйте ще раз пізніше.`
         );
       }
+
       await showMainMenu(ctx);
     }
   });
