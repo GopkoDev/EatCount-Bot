@@ -18,7 +18,7 @@ export const startTelegramBot = async (token: string) => {
   registerMiddlewares(bot);
   registerCommands(bot, db);
   registerMassages(bot, db);
-  registerKeyboardsCallbacks(bot);
+  registerKeyboardsCallbacks(bot, db);
 
   bot.catch((err) => {
     botErrorLogger(err);
