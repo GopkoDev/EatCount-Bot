@@ -11,7 +11,7 @@ import { formatAnswer } from '../helpers/format-answer.js';
 import { nutritionFatsecret } from '../helpers/nutrition-fatsecret-data.js';
 import { writeToDb } from '../helpers/write-meal-to-db.js';
 
-const manualDisableMoc = false;
+const manualDisableMoc = true;
 const isMoc = config.server.nodeEnv === 'development' && !manualDisableMoc;
 
 interface MealDescriptionProcessorParams {
@@ -35,7 +35,11 @@ export const mealDescriptionProcessor = async ({
         query: mealDescription,
       });
 
+  console.log(`Processed foods: ${JSON.stringify(processedFoods, null, 2)}`);
+
   const { validFoods, failedFoods } = await nutritionFatsecret(processedFoods);
+
+  console.log(JSON.stringify(validFoods, null, 2));
 
   const preparedForDb = fatSecretDbProcessor(validFoods, mealType);
 
