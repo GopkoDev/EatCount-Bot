@@ -9,7 +9,9 @@ export const showMealTypesMenu = async (ctx: MyContext) => {
     .row()
     .text('🍽️ Вечеря', 'DINNER')
     .row()
-    .text('🍌 Перекус', 'SNACK');
+    .text('🍌 Перекус', 'SNACK')
+    .row()
+    .text('↩️ До головного меню', 'back_to_main_menu');
 
   await ctx.reply('Оберіть тип прийому їжі:', { reply_markup: keyboard });
 };

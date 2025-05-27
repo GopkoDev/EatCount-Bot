@@ -7,7 +7,9 @@ export const showStatisticsMenu = async (ctx: MyContext) => {
     .row()
     .text('📆 Цього тижня', 'stats_this_week')
     .row()
-    .text('📆 Минулого тижня', 'stats_last_week');
+    .text('📆 Минулого тижня', 'stats_last_week')
+    .row()
+    .text('↩️ До головного меню', 'back_to_main_menu');
 
   await ctx.reply('Оберіть період для статистики:', { reply_markup: keyboard });
 };

@@ -9,11 +9,6 @@ export const settingsMenuCallbacks = (
   bot: Bot<MyContext>,
   db: PrismaClient
 ) => {
-  bot.callbackQuery('back_to_main_menu', async (ctx) => {
-    await ctx.answerCallbackQuery();
-    await showMainMenu(ctx);
-  });
-
   bot.callbackQuery('set_calorie_target', async (ctx) => {
     await ctx.answerCallbackQuery();
     await askForCaloriesTarget(ctx, db);
