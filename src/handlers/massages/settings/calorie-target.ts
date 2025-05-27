@@ -15,104 +15,102 @@ export const calorieTargetHandler = async (
     return;
   }
 
-  if (ctx.session.waitingFor === 'calorie_target') {
-    const inputText = ctx.message.text.trim();
-    const userId = ctx.from.id.toString();
+  const inputText = ctx.message.text.trim();
+  const userId = ctx.from.id.toString();
 
-    ctx.session.waitingFor = undefined;
+  ctx.session.waitingFor = undefined;
 
-    const calorieTarget = parseInt(inputText);
+  const calorieTarget = parseInt(inputText);
 
-    if (isNaN(calorieTarget)) {
-      await ctx.reply(
-        'Будь ласка, введіть дійсне число для цілі по калоріях, або 0 щоб видалити ціль.'
-      );
-      await showSettingsMenu(ctx);
-      return;
-    }
+  if (isNaN(calorieTarget)) {
+    await ctx.reply(
+      'Будь ласка, введіть дійсне число для цілі по калоріях, або 0 щоб видалити ціль.'
+    );
+    await showSettingsMenu(ctx);
+    return;
+  }
 
-    if (calorieTarget < 0) {
-      await ctx.reply(
-        "Будь ласка, введіть невід'ємне число для цілі по калоріях, або 0 щоб видалити ціль."
-      );
-      await showSettingsMenu(ctx);
-      return;
-    }
+  if (calorieTarget < 0) {
+    await ctx.reply(
+      "Будь ласка, введіть невід'ємне число для цілі по калоріях, або 0 щоб видалити ціль."
+    );
+    await showSettingsMenu(ctx);
+    return;
+  }
 
-    if (calorieTarget > 10000) {
-      await ctx.reply(
-        'Значення цілі занадто велике. Будь ласка, введіть реалістичне значення (до 10000 ккал).'
-      );
-      await showSettingsMenu(ctx);
-      return;
-    }
+  if (calorieTarget > 10000) {
+    await ctx.reply(
+      'Значення цілі занадто велике. Будь ласка, введіть реалістичне значення (до 10000 ккал).'
+    );
+    await showSettingsMenu(ctx);
+    return;
+  }
 
-    if (calorieTarget === 0) {
-      try {
-        const user = await getUserFromDb(userId, db);
-
-        const existingTarget = await db.target.findUnique({
-          where: { userId: user.id },
-        });
-
-        if (existingTarget) {
-          await db.target.delete({
-            where: { userId: user.id },
-          });
-
-          await ctx.reply('✅ Вашу ціль по калоріях успішно видалено.');
-        } else {
-          await ctx.reply('У вас не встановлено цілі по калоріях.');
-        }
-
-        await showMainMenu(ctx);
-        return;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Невідома помилка';
-        logger.error(
-          `Error deleting calorie target for user ${userId}: ${errorMessage}`,
-          error
-        );
-        await ctx.reply(
-          'Сталася помилка при видаленні цілі. Будь ласка, спробуйте пізніше.'
-        );
-        await showMainMenu(ctx);
-        return;
-      }
-    }
-
+  if (calorieTarget === 0) {
     try {
       const user = await getUserFromDb(userId, db);
 
-      await db.target.upsert({
-        where: {
-          userId: user.id,
-        },
-        update: {
-          calorieTarget,
-        },
-        create: {
-          userId: user.id,
-          calorieTarget,
-        },
+      const existingTarget = await db.target.findUnique({
+        where: { userId: user.id },
       });
 
-      await ctx.reply(
-        `✅ Ціль по калоріях встановлена на ${calorieTarget} ккал на день.`
-      );
+      if (existingTarget) {
+        await db.target.delete({
+          where: { userId: user.id },
+        });
+
+        await ctx.reply('✅ Вашу ціль по калоріях успішно видалено.');
+      } else {
+        await ctx.reply('У вас не встановлено цілі по калоріях.');
+      }
+
       await showMainMenu(ctx);
+      return;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Невідома помилка';
       logger.error(
-        `Error setting calorie target for user ${userId}: ${errorMessage}`,
+        `Error deleting calorie target for user ${userId}: ${errorMessage}`,
         error
       );
       await ctx.reply(
-        'Сталася помилка при встановленні цілі. Будь ласка, спробуйте пізніше.'
+        'Сталася помилка при видаленні цілі. Будь ласка, спробуйте пізніше.'
       );
       await showMainMenu(ctx);
+      return;
     }
+  }
+
+  try {
+    const user = await getUserFromDb(userId, db);
+
+    await db.target.upsert({
+      where: {
+        userId: user.id,
+      },
+      update: {
+        calorieTarget,
+      },
+      create: {
+        userId: user.id,
+        calorieTarget,
+      },
+    });
+
+    await ctx.reply(
+      `✅ Ціль по калоріях встановлена на ${calorieTarget} ккал на день.`
+    );
+    await showMainMenu(ctx);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Невідома помилка';
+    logger.error(
+      `Error setting calorie target for user ${userId}: ${errorMessage}`,
+      error
+    );
+    await ctx.reply(
+      'Сталася помилка при встановленні цілі. Будь ласка, спробуйте пізніше.'
+    );
+    await showMainMenu(ctx);
   }
 };

@@ -6,40 +6,52 @@ import logger from '../../../lib/logger.js';
 import { showMainMenu } from '../../../menus/main-menu.js';
 import { mealDescriptionProcessor } from '../../callbacks/meal-menu/services/meal-description-processor.js';
 
-export const mealDescription = (bot: Bot<MyContext>, db: PrismaClient) => {
-  bot.on('message:text', async (ctx) => {
-    if (ctx.session.waitingFor === 'meal_description' && ctx.session.mealType) {
-      const mealDescription = ctx.message.text;
-      const mealType = ctx.session.mealType as MealType;
-      const userId = ctx.from.id.toString();
+export const mealDescription = async (ctx: MyContext, db: PrismaClient) => {
+  if (!ctx.message || !ctx.message.text) {
+    return;
+  }
 
-      ctx.session.waitingFor = undefined;
-      ctx.session.mealType = undefined;
+  if (!ctx.session.mealType) {
+    await ctx.reply(
+      'Будь ласка, спочатку виберіть тип прийому їжі. Використайте меню для вибору.'
+    );
+  }
 
-      await ctx.reply('Аналізую ваш прийом їжі, будь ласка, зачекайте...');
+  if (!ctx.from) {
+    await ctx.reply('Не вдалося отримати інформацію про користувача.');
+    return;
+  }
 
-      try {
-        const nutritionMessage = await mealDescriptionProcessor({
-          db,
-          mealDescription,
-          mealType,
-          userId,
-        });
+  const mealDescription = ctx.message.text;
+  const mealType = ctx.session.mealType as MealType;
 
-        await ctx.reply(nutritionMessage, { parse_mode: 'Markdown' });
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        logger.error(
-          `Error processing meal description for user ${userId}: ${errorMessage}`,
-          error
-        );
-        await ctx.reply(
-          `Виникла помилка при обробці вашого прийому їжі. Будь ласка, спробуйте ще раз пізніше.`
-        );
-      }
+  const userId = ctx.from.id.toString();
 
-      await showMainMenu(ctx);
-    }
-  });
+  ctx.session.waitingFor = undefined;
+  ctx.session.mealType = undefined;
+
+  try {
+    await ctx.reply('Аналізую ваш прийом їжі, будь ласка, зачекайте...');
+
+    const nutritionMessage = await mealDescriptionProcessor({
+      db,
+      mealDescription,
+      mealType,
+      userId,
+    });
+
+    await ctx.reply(nutritionMessage, { parse_mode: 'Markdown' });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    logger.error(
+      `Error processing meal description for user ${userId}: ${errorMessage}`,
+      error
+    );
+    await ctx.reply(
+      `Виникла помилка при обробці вашого прийому їжі. Будь ласка, спробуйте ще раз пізніше.`
+    );
+  } finally {
+    await showMainMenu(ctx);
+  }
 };
