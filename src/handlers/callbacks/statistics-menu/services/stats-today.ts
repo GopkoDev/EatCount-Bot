@@ -9,6 +9,17 @@ interface MealWithItems extends Meal {
   items: MealItem[];
 }
 
+// Helper function to create a visual progress bar
+function createProgressBar(percent: number): string {
+  const filledCount = Math.round(percent / 10);
+  const emptyCount = 10 - filledCount;
+
+  const filled = '🟩'.repeat(filledCount);
+  const empty = '⬜'.repeat(emptyCount);
+
+  return filled + empty;
+}
+
 export const statsTodayService = async (ctx: MyContext, db: PrismaClient) => {
   const userId = ctx.from?.id.toString();
   if (!userId) {
@@ -27,6 +38,11 @@ export const statsTodayService = async (ctx: MyContext, db: PrismaClient) => {
     const startOfDay = new Date(startOfDayUTC);
     const endOfDay = new Date(endOfDayUTC);
 
+    // Get the user's calorie target if set
+    const target = await db.target.findFirst({
+      where: { userId: user.id },
+    });
+
     const meals = (await db.meal.findMany({
       where: {
         userId: user.id,
@@ -41,7 +57,10 @@ export const statsTodayService = async (ctx: MyContext, db: PrismaClient) => {
     })) as MealWithItems[];
 
     if (meals.length === 0) {
-      await ctx.reply('Сьогодні ви ще не додали жодного прийому їжі.');
+      const message = target
+        ? `Сьогодні ви ще не додали жодного прийому їжі.\nВаша ціль на день: ${target.calorieTarget} ккал.`
+        : 'Сьогодні ви ще не додали жодного прийому їжі.';
+      await ctx.reply(message);
       return;
     }
 
@@ -113,12 +132,37 @@ export const statsTodayService = async (ctx: MyContext, db: PrismaClient) => {
         ? ((carbCalories / totalCalories) * 100).toFixed(1)
         : '0.0';
 
+    // Format target info if available
+    let targetInfo = '';
+    if (target) {
+      const remaining = target.calorieTarget - totalCalories;
+      const percentConsumed = Math.min(
+        100,
+        (totalCalories / target.calorieTarget) * 100
+      ).toFixed(1);
+      const progressBar = createProgressBar(parseFloat(percentConsumed));
+
+      const statusEmoji = remaining > 0 ? '💫' : remaining === 0 ? '✅' : '⚠️';
+      const statusText =
+        remaining > 0
+          ? `Залишилось: ${remaining.toFixed(1)} ккал`
+          : remaining === 0
+          ? `Ціль виконана!`
+          : `Перевищено на: ${Math.abs(remaining).toFixed(1)} ккал`;
+
+      targetInfo =
+        `\n\n🎯 Денна ціль: ${target.calorieTarget} ккал\n` +
+        `${progressBar} ${percentConsumed}%\n` +
+        `${statusEmoji} ${statusText}\n`;
+    }
+
     const message =
       `📆 Сьогодні, ${dayAndMonthKyiv}\n\n` +
       `⚡ Калорії: ${totalCalories.toFixed(1)} ккал\n` +
       `🥩 Білки: ${totalProtein.toFixed(1)} г  (${proteinPercentage}%)\n` +
       `🧈 Жири: ${totalFat.toFixed(1)} г  (${fatPercentage}%)\n` +
-      `🍞 Вуглеводи: ${totalCarbs.toFixed(1)} г  (${carbPercentage}%)\n` +
+      `🍞 Вуглеводи: ${totalCarbs.toFixed(1)} г  (${carbPercentage}%)` +
+      `${targetInfo}\n` +
       `🥦 Клітковина: ${totalFiber.toFixed(1)} г\n` +
       `🍭 Цукор: ${totalSugar.toFixed(1)} г\n` +
       `🧂 Натрій: ${totalSodium.toFixed(0)} мг\n` +

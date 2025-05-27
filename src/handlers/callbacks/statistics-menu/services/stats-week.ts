@@ -33,6 +33,11 @@ export const statsWeekService = async (
   }
 
   try {
+    // Get the user's calorie target if set
+    const target = await db.target.findFirst({
+      where: { userId: user.id },
+    });
+
     const meals = await db.meal.findMany({
       where: {
         userId: user.id,
@@ -47,7 +52,10 @@ export const statsWeekService = async (
     });
 
     if (meals.length === 0) {
-      await ctx.reply('За цей тиждень ви ще не додали жодного прийому їжі.');
+      const message = target
+        ? `За цей тиждень ви ще не додали жодного прийому їжі.\nВаша щоденна ціль: ${target.calorieTarget} ккал.`
+        : 'За цей тиждень ви ще не додали жодного прийому їжі.';
+      await ctx.reply(message);
       return;
     }
 
@@ -106,12 +114,42 @@ export const statsWeekService = async (
       }
     });
 
+    // Calculate weekly statistics
+    let targetInfo = '';
+    if (target) {
+      const weeklyTarget = target.calorieTarget * 7; // 7 days per week
+      const remaining = weeklyTarget - totalCalories;
+      const percentConsumed = Math.min(
+        100,
+        (totalCalories / weeklyTarget) * 100
+      ).toFixed(1);
+
+      // Create visual progress bar for weekly target
+      const filledCount = Math.round(parseFloat(percentConsumed) / 10);
+      const emptyCount = 10 - filledCount;
+      const progressBar = '🟩'.repeat(filledCount) + '⬜'.repeat(emptyCount);
+
+      const statusEmoji = remaining > 0 ? '💫' : remaining === 0 ? '✅' : '⚠️';
+      const statusText =
+        remaining > 0
+          ? `Залишилось: ${remaining.toFixed(1)} ккал`
+          : remaining === 0
+          ? `Тижнева ціль виконана!`
+          : `Перевищено на: ${Math.abs(remaining).toFixed(1)} ккал`;
+
+      targetInfo =
+        `\n🎯 Тижнева ціль: ${weeklyTarget} ккал\n` +
+        `${progressBar} ${percentConsumed}%\n` +
+        `${statusEmoji} ${statusText}\n`;
+    }
+
     const message =
       `📅 Статистика за тиждень (${weekRangeKyiv}):\n\n` +
       `⚡ Калорії: ${totalCalories.toFixed(1)} ккал\n` +
       `🥩 Білки: ${totalProtein.toFixed(1)} г  (${proteinPercentage}%)\n` +
       `🧈 Жири: ${totalFat.toFixed(1)} г  (${fatPercentage}%)\n` +
-      `🍞 Вуглеводи: ${totalCarbs.toFixed(1)} г  (${carbPercentage}%)\n\n` +
+      `🍞 Вуглеводи: ${totalCarbs.toFixed(1)} г  (${carbPercentage}%)` +
+      `${targetInfo}\n\n` +
       fullDailyMessages.join('\n');
 
     await ctx.reply(message);
