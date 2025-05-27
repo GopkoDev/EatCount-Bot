@@ -2,6 +2,7 @@ import { Bot } from 'grammy';
 import type { MyContext } from '../../../types.js';
 import { showMealTypesMenu } from '../../../menus/meal-menu.js';
 import { showStatisticsMenu } from '../../../menus/statistics-variants-menu.js';
+import { showSettingsMenu } from '../../../menus/settings-menu.js';
 
 export const mainMenuCallbacks = (bot: Bot<MyContext>) => {
   bot.callbackQuery('add_meal', async (ctx) => {
@@ -12,5 +13,10 @@ export const mainMenuCallbacks = (bot: Bot<MyContext>) => {
   bot.callbackQuery('statistics', async (ctx) => {
     await ctx.answerCallbackQuery();
     await showStatisticsMenu(ctx);
+  });
+
+  bot.callbackQuery('settings', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await showSettingsMenu(ctx);
   });
 };

@@ -40,9 +40,11 @@ model RefreshToken {
 
 model Target {
   id            String @id @default(uuid())
-  userId        String
+  userId        String @unique
   calorieTarget Int
-  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("targets")
 }
 
 model Meal {
@@ -113,7 +115,7 @@ model ApiRequestLog {
   totalTokens      Int
   queryText        String
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("api_request_logs")
 }
