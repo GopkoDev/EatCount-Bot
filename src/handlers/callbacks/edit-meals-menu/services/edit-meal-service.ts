@@ -197,7 +197,7 @@ export const handleConfirmDeleteMeal = async (
     });
 
     await ctx.reply('✅ Прийом їжі успішно видалено');
-    await handleBackToMealsList(ctx, db);
+    await handleBackToMealsList(ctx);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Невідома помилка';
