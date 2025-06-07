@@ -2,7 +2,7 @@ import type { PrismaClient, MealType } from '@prisma/client';
 import type { MyContext } from '../../../../types.js';
 import type { Meal, MealItem } from '@prisma/client';
 import { getUserFromDb } from '../../../../helpers/get-user-from-db.js';
-import { getTodayRangeUTC } from '../helpers/get-time-ranges.js';
+import { getTodayRange } from '../helpers/get-time-ranges.js';
 import { translateMealTypeToUkrainian } from '../../../../helpers/meal-type-translator.js';
 
 interface MealWithItems extends Meal {
@@ -28,16 +28,9 @@ export const statsTodayService = async (ctx: MyContext, db: PrismaClient) => {
 
   const user = await getUserFromDb(userId, db);
 
-  const { startOfDayUTC, endOfDayUTC, dayAndMonthKyiv } = getTodayRangeUTC();
-
-  if (!startOfDayUTC || !endOfDayUTC) {
-    throw new Error('[TOODAY STATS] Invalid date range');
-  }
+  const { startOfDay, endOfDay, dayAndMonthKyiv } = getTodayRange();
 
   try {
-    const startOfDay = new Date(startOfDayUTC);
-    const endOfDay = new Date(endOfDayUTC);
-
     // Get the user's calorie target if set
     const target = await db.target.findFirst({
       where: { userId: user.id },

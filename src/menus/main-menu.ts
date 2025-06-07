@@ -7,6 +7,8 @@ export const showMainMenu = async (ctx: MyContext) => {
     .row()
     .text('📊 Статистика', 'statistics')
     .row()
+    .text('🔄 Редагувати', 'edit_meals')
+    .row()
     .text('⚙️ Налаштування', 'settings')
     .row()
     .text('🚀 Розширена статистика на сайті', 'go_to_site');

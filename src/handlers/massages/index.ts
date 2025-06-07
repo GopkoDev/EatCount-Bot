@@ -4,11 +4,14 @@ import type { PrismaClient } from '@prisma/client';
 
 import { mealDescription } from './meal/meal-description.js';
 import { calorieTargetHandler } from './settings/calorie-target.js';
+import { editMealDescriptionHandler } from './meal/edit-meal-description.js';
 
 export const registerMassages = (bot: Bot<MyContext>, db: PrismaClient) => {
   const handlers: Record<string, (ctx: MyContext) => Promise<void>> = {
     calorie_target: async (ctx) => await calorieTargetHandler(ctx, db),
     meal_description: async (ctx) => await mealDescription(ctx, db),
+    meal_edit_description: async (ctx) =>
+      await editMealDescriptionHandler(ctx, db),
   };
 
   bot.on('message:text', async (ctx, next) => {

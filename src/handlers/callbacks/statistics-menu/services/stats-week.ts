@@ -4,7 +4,6 @@ import { getUserFromDb } from '../../../../helpers/get-user-from-db.js';
 import {
   getRangeByKeyType,
   getAllDatesInWeek,
-  timeZone,
   formatDateToKey,
 } from '../helpers/get-time-ranges.js';
 
@@ -25,15 +24,9 @@ export const statsWeekService = async (
 
   const user = await getUserFromDb(userId, db);
 
-  const { startOfWeekUTC, endOfWeekUTC, weekRangeKyiv } =
-    getRangeByKeyType(key);
-
-  if (!startOfWeekUTC || !endOfWeekUTC) {
-    throw new Error('[WEEK STATS] Invalid date range');
-  }
+  const { startOfWeek, endOfWeek, weekRangeKyiv } = getRangeByKeyType(key);
 
   try {
-    // Get the user's calorie target if set
     const target = await db.target.findFirst({
       where: { userId: user.id },
     });
@@ -42,8 +35,8 @@ export const statsWeekService = async (
       where: {
         userId: user.id,
         timestamp: {
-          gte: startOfWeekUTC,
-          lt: endOfWeekUTC,
+          gte: startOfWeek,
+          lt: endOfWeek,
         },
       },
       include: {
@@ -95,7 +88,7 @@ export const statsWeekService = async (
     const fatPercentage = ((fatCalories / totalCalories) * 100).toFixed(1);
     const carbPercentage = ((carbCalories / totalCalories) * 100).toFixed(1);
 
-    const allDates = getAllDatesInWeek(startOfWeekUTC);
+    const allDates = getAllDatesInWeek(startOfWeek);
 
     const fullDailyMessages = allDates.map((date) => {
       if (dailyStats[date]) {

@@ -2,7 +2,7 @@ import { DateTime } from 'luxon';
 
 export const timeZone = 'Europe/Kyiv';
 
-export const getTodayRangeUTC = (date = new Date()) => {
+export const getTodayRange = (date = new Date()) => {
   const startOfDayKyiv = DateTime.fromJSDate(date)
     .setZone(timeZone)
     .startOf('day');
@@ -11,13 +11,13 @@ export const getTodayRangeUTC = (date = new Date()) => {
   const dayAndMonthKyiv = startOfDayKyiv.toFormat('dd MMMM', { locale: 'uk' });
 
   return {
-    startOfDayUTC: startOfDayKyiv.toUTC().toISO(),
-    endOfDayUTC: endOfDayKyiv.toUTC().toISO(),
+    startOfDay: startOfDayKyiv.toJSDate(),
+    endOfDay: endOfDayKyiv.toJSDate(),
     dayAndMonthKyiv,
   };
 };
 
-const getWeekRangeUTC = (date = new Date()) => {
+const getWeekRange = (date = new Date()) => {
   const startOfWeekKyiv = DateTime.fromJSDate(date, { zone: timeZone }).startOf(
     'week'
   );
@@ -28,8 +28,8 @@ const getWeekRangeUTC = (date = new Date()) => {
   })} - ${endOfWeekKyiv.toFormat('dd MMMM', { locale: 'uk' })}`;
 
   return {
-    startOfWeekUTC: startOfWeekKyiv.toUTC().toISO(),
-    endOfWeekUTC: endOfWeekKyiv.toUTC().toISO(),
+    startOfWeek: startOfWeekKyiv.toJSDate(),
+    endOfWeek: endOfWeekKyiv.toJSDate(),
     weekRangeKyiv,
   };
 };
@@ -39,18 +39,18 @@ export const getRangeByKeyType = (
   date = new Date()
 ) => {
   if (keyType === 'stats_this_week') {
-    return getWeekRangeUTC(date);
+    return getWeekRange(date);
   } else if (keyType === 'stats_last_week') {
     const lastWeekDate = DateTime.fromJSDate(date, { zone: timeZone }).minus({
       weeks: 1,
     });
-    return getWeekRangeUTC(lastWeekDate.toJSDate());
+    return getWeekRange(lastWeekDate.toJSDate());
   }
   throw new Error(`Unsupported KeyType: ${keyType}`);
 };
 
-export const getAllDatesInWeek = (startOfWeekUTC: string) => {
-  const startOfWeekKyiv = DateTime.fromISO(startOfWeekUTC, { zone: timeZone });
+export const getAllDatesInWeek = (startOfWeek: Date) => {
+  const startOfWeekKyiv = DateTime.fromJSDate(startOfWeek, { zone: timeZone });
   return Array.from({ length: 7 }, (_, i) => {
     return startOfWeekKyiv.plus({ days: i }).toFormat('yyyy-MM-dd');
   });
@@ -60,4 +60,10 @@ export const formatDateToKey = (timestamp: Date) => {
   return DateTime.fromJSDate(timestamp, { zone: timeZone }).toFormat(
     'yyyy-MM-dd'
   );
+};
+
+export const getWeekAgoDate = (date = new Date()) => {
+  return DateTime.fromJSDate(date, { zone: timeZone })
+    .minus({ weeks: 1 })
+    .toJSDate();
 };

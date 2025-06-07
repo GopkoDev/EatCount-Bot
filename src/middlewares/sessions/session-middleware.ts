@@ -5,6 +5,9 @@ import { session } from 'grammy';
 export interface SessionData {
   waitingFor?: string;
   mealType?: string;
+  editMealId?: string;
+  editItemId?: string;
+  editPage?: number;
 }
 
 export const sessionMiddleware = (bot: Bot<MyContext>) => {
