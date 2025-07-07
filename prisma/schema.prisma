@@ -11,19 +11,17 @@ model User {
   id                       String                      @id @default(cuid())
   name                     String?
   photoUrl                 String?                     @map("photo_url")
-  verified                 DateTime?                   @map("verified")
-  twoFactorEnabled         Boolean                     @default(false)
-  twoFactorSecret          String?
   telegramId               String?                     @unique
   telegramUsername         String?                     @map("telegram_username")
   languageCode             String?                     @map("language_code")
   createdAt                DateTime                    @default(now())
   updatedAt                DateTime                    @updatedAt
-  targets                  Target[]
-  meals                    Meal[]
-  refreshTokens            RefreshToken[]
+  role                     Role                        @default(USER)
   apiRequests              ApiRequestLog[]
   FaildSearchInFatSecretDb FaildSearchByFatSecretApi[]
+  meals                    Meal[]
+  refreshTokens            RefreshToken[]
+  targets                  Target?
 }
 
 model RefreshToken {
@@ -48,36 +46,32 @@ model Target {
 }
 
 model Meal {
-  id          String   @id @default(uuid())
-  userId      String
-  type        MealType
-  timestamp   DateTime
-  description String
-
+  id            String     @id @default(uuid())
+  userId        String
+  type          MealType
+  timestamp     DateTime
+  description   String
   totalCalories Int
   totalProtein  Float
   totalFat      Float
   totalCarbs    Float
-
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  items     MealItem[]
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  items         MealItem[]
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("meals")
 }
 
 model MealItem {
-  id          String @id @default(uuid())
-  mealId      String
-  name        String
-  amountGrams Float
-
-  calories Float
-  protein  Float
-  fat      Float
-  carbs    Float
-
+  id                 String @id @default(uuid())
+  mealId             String
+  name               String
+  amountGrams        Float
+  calories           Float
+  protein            Float
+  fat                Float
+  carbs              Float
   saturatedFat       Float
   polyunsaturatedFat Float
   monounsaturatedFat Float
@@ -93,8 +87,36 @@ model MealItem {
   transFat           Float?
   addedSugars        Float?
   vitaminD           Float?
+  meal               Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+}
 
-  meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+model ApiRequestLog {
+  id               String   @id @default(uuid())
+  timestamp        DateTime @default(now())
+  userId           String
+  model            String
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  queryText        String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_request_logs")
+}
+
+model FaildSearchByFatSecretApi {
+  id              String   @id @default(uuid())
+  userId          String
+  timestamp       DateTime @default(now())
+  name            String
+  weight          Float
+  query           String
+  additionalTerms String[]
+  excludeTerms    String[]
+  errorMessage    String?
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("failed_search_in_fat_secret")
 }
 
 enum MealType {
@@ -104,35 +126,7 @@ enum MealType {
   SNACK
 }
 
-model ApiRequestLog {
-  id        String   @id @default(uuid())
-  timestamp DateTime @default(now())
-  userId    String
-
-  model            String
-  promptTokens     Int
-  completionTokens Int
-  totalTokens      Int
-  queryText        String
-
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("api_request_logs")
-}
-
-model FaildSearchByFatSecretApi {
-  id        String   @id @default(uuid())
-  userId    String
-  timestamp DateTime @default(now())
-
-  name            String
-  weight          Float
-  query           String
-  additionalTerms String[]
-  excludeTerms    String[]
-  errorMessage    String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("failed_search_in_fat_secret")
+enum Role {
+  USER
+  ADMIN
 }
