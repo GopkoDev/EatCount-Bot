@@ -19,4 +19,10 @@ export const mainMenuCallbacks = (bot: Bot<MyContext>) => {
     await ctx.answerCallbackQuery();
     await showSettingsMenu(ctx);
   });
+
+  bot.callbackQuery('go_to_site', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const siteUrl = process.env.SITE_URL;
+    await ctx.reply(`Посилання на сайт: ${siteUrl}`);
+  });
 };
